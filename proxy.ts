@@ -1,3 +1,4 @@
+import { parseSetCookie } from "cookie";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -51,26 +52,33 @@ export async function proxy(request: NextRequest) {
       if (setCookie) {
         const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
 
-        for (const cookie of cookies) {
-          const [cookieValue] = cookie.split(";");
+        for (const cookieHeader of cookies) {
+          const parsedCookie = parseSetCookie(cookieHeader);
 
-          const separatorIndex = cookieValue.indexOf("=");
-
-          if (separatorIndex === -1) {
+          if (!parsedCookie) {
             continue;
           }
 
-          const name = cookieValue.slice(0, separatorIndex).trim();
-          const value = cookieValue.slice(separatorIndex + 1).trim();
+          const { name, value, ...options } = parsedCookie;
 
-          nextResponse.cookies.set(name, value);
+          if (!value) {
+            continue;
+          }
+
+          nextResponse.cookies.set({
+            name,
+            value,
+            ...options,
+          });
         }
       }
 
       if (response.data) {
         return nextResponse;
       }
-    } catch {}
+    } catch {
+      // Session refresh failed.
+    }
 
     if (isPrivateRoute) {
       return NextResponse.redirect(new URL("/sign-in", request.url));
