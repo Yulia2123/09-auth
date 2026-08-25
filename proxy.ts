@@ -1,4 +1,5 @@
 import { parseSetCookie } from "cookie";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -10,8 +11,10 @@ const AUTH_ROUTES = ["/sign-in", "/sign-up"];
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const accessToken = request.cookies.get("accessToken")?.value;
-  const refreshToken = request.cookies.get("refreshToken")?.value;
+  const cookieStore = await cookies();
+
+  const accessToken = cookieStore.get("accessToken")?.value;
+  const refreshToken = cookieStore.get("refreshToken")?.value;
 
   const isPrivateRoute = PRIVATE_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
@@ -39,7 +42,7 @@ export async function proxy(request: NextRequest) {
 
   if (refreshToken) {
     try {
-      const cookieHeader = request.cookies.toString();
+      const cookieHeader = cookieStore.toString();
 
       const response = await checkSession(cookieHeader);
 
