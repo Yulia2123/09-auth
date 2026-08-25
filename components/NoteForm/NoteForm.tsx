@@ -1,9 +1,10 @@
 "use client";
 
+import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { createNote } from "@/lib/api/api";
+import { createNote } from "@/lib/api/clientApi";
 import { useNoteStore } from "@/lib/store/noteStore";
 
 import css from "./NoteForm.module.css";
@@ -34,6 +35,24 @@ export default function NoteForm() {
     router.push("/notes/filter/all");
   };
 
+  const handleTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setDraft({
+      title: event.target.value,
+    });
+  };
+
+  const handleContentChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    setDraft({
+      content: event.target.value,
+    });
+  };
+
+  const handleTagChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setDraft({
+      tag: event.target.value,
+    });
+  };
+
   return (
     <form action={handleSubmit} className={css.form}>
       <div className={css.formGroup}>
@@ -44,11 +63,7 @@ export default function NoteForm() {
           name="title"
           type="text"
           defaultValue={draft.title}
-          onChange={(event) =>
-            setDraft({
-              title: event.target.value,
-            })
-          }
+          onChange={handleTitleChange}
           required
         />
       </div>
@@ -60,11 +75,7 @@ export default function NoteForm() {
           id="content"
           name="content"
           defaultValue={draft.content}
-          onChange={(event) =>
-            setDraft({
-              content: event.target.value,
-            })
-          }
+          onChange={handleContentChange}
           required
         />
       </div>
@@ -76,11 +87,7 @@ export default function NoteForm() {
           id="tag"
           name="tag"
           defaultValue={draft.tag}
-          onChange={(event) =>
-            setDraft({
-              tag: event.target.value,
-            })
-          }
+          onChange={handleTagChange}
         >
           <option value="Todo">Todo</option>
           <option value="Work">Work</option>

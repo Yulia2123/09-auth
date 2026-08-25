@@ -3,17 +3,18 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { fetchNoteById } from "@/lib/api/clientApi";
+import type { Note } from "@/types/note";
 
-type Props = {
+type NoteDetailsProps = {
   id: string;
 };
 
-export default function NoteDetails({ id }: Props) {
+export default function NoteDetails({ id }: NoteDetailsProps) {
   const {
     data: note,
     isLoading,
     isError,
-  } = useQuery({
+  } = useQuery<Note>({
     queryKey: ["note", id],
     queryFn: () => fetchNoteById(id),
   });

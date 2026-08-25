@@ -1,13 +1,20 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 
-export default function NotesPage() {
+import { fetchNotes } from "@/lib/api/serverApi";
+import NoteList from "@/components/NoteList/NoteList";
+
+export const metadata: Metadata = {
+  title: "Notes | NoteHub",
+  description: "Manage your notes in NoteHub",
+};
+
+export default async function NotesPage() {
+  const notes = await fetchNotes();
+
   return (
     <main>
       <h1>Notes</h1>
-
-      <p>Here you can manage your notes.</p>
-
-      <Link href="/profile">Go to profile</Link>
+      <NoteList notes={notes} />
     </main>
   );
 }

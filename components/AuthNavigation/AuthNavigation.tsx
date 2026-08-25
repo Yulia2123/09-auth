@@ -12,6 +12,7 @@ export default function AuthNavigation() {
   const router = useRouter();
 
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
 
   const clearIsAuthenticated = useAuthStore(
     (state) => state.clearIsAuthenticated
@@ -52,6 +53,8 @@ export default function AuthNavigation() {
       </li>
 
       <li className={css.navigationItem}>
+        <p className={css.userEmail}>{user?.email}</p>
+
         <button
           type="button"
           className={css.logoutButton}
