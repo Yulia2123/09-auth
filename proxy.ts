@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { checkSession } from "./lib/api/serverApi";
+
 const PRIVATE_ROUTES = ["/notes", "/profile"];
 const AUTH_ROUTES = ["/sign-in", "/sign-up"];
 
@@ -18,7 +20,6 @@ export async function proxy(request: NextRequest) {
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 
-  // Пользователь не авторизован
   if (!accessToken && !refreshToken) {
     if (isPrivateRoute) {
       return NextResponse.redirect(new URL("/sign-in", request.url));
@@ -27,7 +28,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Есть accessToken
   if (accessToken) {
     if (isAuthRoute) {
       return NextResponse.redirect(new URL("/notes", request.url));
@@ -36,40 +36,41 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Access token отсутствует, но есть refresh token
   if (refreshToken) {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/session`,
-        {
-          method: "GET",
-          headers: {
-            Cookie: `refreshToken=${refreshToken}`,
-          },
+      const cookieHeader = request.cookies.toString();
+
+      const response = await checkSession(cookieHeader);
+
+      const nextResponse = isAuthRoute
+        ? NextResponse.redirect(new URL("/notes", request.url))
+        : NextResponse.next();
+
+      const setCookie = response.headers["set-cookie"];
+
+      if (setCookie) {
+        const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
+
+        for (const cookie of cookies) {
+          const [cookieValue] = cookie.split(";");
+
+          const separatorIndex = cookieValue.indexOf("=");
+
+          if (separatorIndex === -1) {
+            continue;
+          }
+
+          const name = cookieValue.slice(0, separatorIndex).trim();
+          const value = cookieValue.slice(separatorIndex + 1).trim();
+
+          nextResponse.cookies.set(name, value);
         }
-      );
+      }
 
-      if (response.ok) {
-        const data = await response.json();
-
-        const nextResponse = isAuthRoute
-          ? NextResponse.redirect(new URL("/notes", request.url))
-          : NextResponse.next();
-
-        if (data.accessToken) {
-          nextResponse.cookies.set("accessToken", data.accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-          });
-        }
-
+      if (response.data) {
         return nextResponse;
       }
-    } catch {
-      // Сессию обновить не удалось.
-    }
+    } catch {}
 
     if (isPrivateRoute) {
       return NextResponse.redirect(new URL("/sign-in", request.url));

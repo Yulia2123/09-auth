@@ -46,14 +46,17 @@ export async function getMe(): Promise<User> {
   return data;
 }
 
-export async function checkSession() {
+export async function checkSession(cookieHeader?: string) {
   const cookieStore = await cookies();
 
-  const response = await api.get<User | null>("/auth/session", {
+  const { data, headers } = await api.get<User | null>("/auth/session", {
     headers: {
-      Cookie: cookieStore.toString(),
+      Cookie: cookieHeader ?? cookieStore.toString(),
     },
   });
 
-  return response;
+  return {
+    data,
+    headers,
+  };
 }
