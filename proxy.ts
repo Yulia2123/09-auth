@@ -79,9 +79,7 @@ export async function proxy(request: NextRequest) {
       if (response.data) {
         return nextResponse;
       }
-    } catch {
-      // Session refresh failed.
-    }
+    } catch {}
 
     if (isPrivateRoute) {
       return NextResponse.redirect(new URL("/sign-in", request.url));
